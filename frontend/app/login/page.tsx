@@ -19,7 +19,7 @@ const LoginPage = () => {
 
         try {
             const response = await api.post('/auth/login', { email, password });
-            const { token } = response.data; // Changed from response.data.data
+            const { token } = response.data;
 
             if (token) {
                 localStorage.setItem('token', token);
@@ -56,7 +56,7 @@ const LoginPage = () => {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-bold"
+                            className="w-full px-6 py-4 rounded-2xl text-gray-600 border border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-bold"
                             placeholder="founder@startup.com"
                             required
                         />
@@ -67,7 +67,7 @@ const LoginPage = () => {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-bold"
+                            className="w-full px-6 py-4 rounded-2xl  text-gray-600 border border-gray-100 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all font-bold"
                             placeholder="••••••••"
                             required
                         />
