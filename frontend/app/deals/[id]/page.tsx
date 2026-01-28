@@ -1,9 +1,11 @@
-
 'use client';
 
 import React, { useEffect, useState, use } from 'react';
 import api from '@/lib/api';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { AnimatedButton } from '@/components/AnimatedButton';
+import { fadeIn, containerVariants, itemVariants } from '@/lib/animations';
 
 interface Deal {
   _id: string;
@@ -33,132 +35,93 @@ const DealDetailsPage = ({ params: paramsPromise }: { params: Promise<{ id: stri
   const [claimed, setClaimed] = useState(false);
   const [claimError, setClaimError] = useState('');
 
-  const isLocked = deal?.accessLevel === 'locked';
-  const showVerify = user && !user.isVerified && isLocked;
-
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const dealRes = await api.get(`/deals/${id}`);
+        const [dealRes, userRes] = await Promise.all([
+          api.get(`/deals/${id}`),
+          localStorage.getItem('token') ? api.get('/auth/me') : Promise.resolve({ data: null })
+        ]);
         setDeal(dealRes.data);
-
-        const token = localStorage.getItem('token');
-        if (token) {
-          const userRes = await api.get('/auth/me');
-          setUser(userRes.data);
-        }
+        setUser(userRes.data);
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to load deal details.');
       } finally {
         setLoading(false);
       }
     };
-
     if (id) fetchData();
   }, [id]);
 
   const handleAction = async () => {
-    if (showVerify) {
-      // Demo Verification Flow
-      setActionLoading(true);
-      try {
-        await api.post('/auth/verify-me');
-        const userRes = await api.get('/auth/me');
-        setUser(userRes.data);
-      } catch (err: any) {
-        setClaimError(err.response?.data?.message || 'Verification failed. Please try again.');
-      } finally {
-        setActionLoading(false);
-      }
-      return;
-    }
-
-    // Claim Flow
     setActionLoading(true);
     setClaimError('');
     try {
-      await api.post(`/claims/${id}`);
-      setClaimed(true);
-    } catch (err: any) {
-      const status = err.response?.status;
-      const message = err.response?.data?.message;
-
-      if (status === 401 || status === 403 || message?.toLowerCase().includes('unauthorized') || message?.toLowerCase().includes('verified')) {
-        setClaimError(message || 'You must be verified to claim this deal');
+      if (showVerify) {
+        await api.post('/auth/verify-me');
+        const userRes = await api.get('/auth/me');
+        setUser(userRes.data);
       } else {
-        setClaimError(message || 'Failed to claim deal. Please try again.');
+        await api.post(`/claims/${id}`);
+        setClaimed(true);
       }
+    } catch (err: any) {
+      setClaimError(err.response?.data?.message || 'Action failed. Please try again.');
     } finally {
       setActionLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const isLockedUI = deal?.accessLevel === 'locked' && !user?.isVerified;
+  const showVerify = user && !user.isVerified && deal?.accessLevel === 'locked';
 
-  if (error || !deal) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-24 text-center">
-        <div className="bg-white p-8 md:p-16 rounded-3xl border border-gray-100 shadow-sm">
-          <h2 className="text-3xl font-black text-gray-900 mb-4">Deal Not Found</h2>
-          <p className="text-gray-500 mb-8 max-w-sm mx-auto">{error || "The deal you're looking for doesn't exist or is currently unavailable."}</p>
-          <Link href="/deals" className="inline-flex items-center text-blue-600 font-black hover:gap-3 transition-all">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to deals
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
 
-  // A deal is locked for the UI if it's 'locked' AND user is not verified
-  const isLockedUI = deal.accessLevel === 'locked' && !user?.isVerified;
+  if (error || !deal) return (
+    <div className="max-w-3xl mx-auto px-4 py-24 text-center">
+      <motion.div initial="hidden" animate="visible" variants={fadeIn} className="bg-white p-8 md:p-16 rounded-3xl border border-gray-100 shadow-sm">
+        <h2 className="text-3xl font-black text-gray-900 mb-4">Deal Not Found</h2>
+        <p className="text-gray-500 mb-8 max-w-sm mx-auto">{error || "The deal you're looking for doesn't exist."}</p>
+        <Link href="/deals" className="inline-flex items-center text-blue-600 font-black hover:gap-3 transition-all">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+          Back to deals
+        </Link>
+      </motion.div>
+    </div>
+  );
 
   return (
-    <div className="max-w-6xl mx-auto px-4 md:px-8 py-8 md:py-16">
-      <Link href="/deals" className="inline-flex items-center text-xs font-black text-gray-400 hover:text-blue-600 mb-10 transition-all uppercase tracking-widest group">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Keep Exploring
-      </Link>
+    <motion.div initial="hidden" animate="visible" variants={containerVariants} className="max-w-6xl mx-auto px-4 md:px-8 py-8 md:py-16">
+      <motion.div variants={itemVariants}>
+        <Link href="/deals" className="inline-flex items-center text-xs font-black text-gray-400 hover:text-blue-600 mb-10 transition-all uppercase tracking-widest group">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+          Keep Exploring
+        </Link>
+      </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-16">
-        {/* Main Content */}
-        <div className="lg:col-span-8 space-y-10">
+        <motion.div variants={itemVariants} className="lg:col-span-8 space-y-10">
           <section className="bg-white rounded-[2rem] p-8 md:p-14 border border-gray-100 shadow-sm relative overflow-hidden">
-            {/* Lock Overlay on Detail Page for unverified users */}
             {isLockedUI && (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/40 backdrop-blur-md">
-                <div className="p-4 bg-white rounded-2xl shadow-2xl border border-gray-100 transform scale-125">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
+                <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="p-4 bg-white rounded-2xl shadow-2xl border border-gray-100">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                </motion.div>
               </div>
             )}
 
             <div className="flex flex-wrap gap-3 mb-8">
-              <span className="px-4 py-1.5 bg-blue-50 text-blue-600 text-[10px] font-black rounded-full uppercase tracking-[0.2em] border border-blue-100">
-                {deal.category}
-              </span>
+              <span className="px-4 py-1.5 bg-blue-50 text-blue-600 text-[10px] font-black rounded-full uppercase tracking-[0.2em] border border-blue-100">{deal.category}</span>
               {deal.accessLevel === 'locked' && (
-                <span className="px-4 py-1.5 bg-amber-50 text-amber-600 text-[10px] font-black rounded-full border border-amber-100 uppercase tracking-[0.2em]">
-                  Locked Benefit
-                </span>
+                <span className="px-4 py-1.5 bg-amber-50 text-amber-600 text-[10px] font-black rounded-full border border-amber-100 uppercase tracking-[0.2em]">Locked Benefit</span>
               )}
             </div>
             <h1 className="text-4xl md:text-6xl font-black text-gray-900 mb-8 leading-tight">{deal.title}</h1>
-            <p className="text-base md:text-xl text-gray-500 leading-relaxed font-medium whitespace-pre-wrap">
-              {deal.description}
-            </p>
+            <p className="text-base md:text-xl text-gray-500 leading-relaxed font-medium whitespace-pre-wrap">{deal.description}</p>
           </section>
 
           <section className="bg-gray-900 rounded-[2rem] p-8 md:p-14 text-white relative overflow-hidden">
@@ -167,87 +130,53 @@ const DealDetailsPage = ({ params: paramsPromise }: { params: Promise<{ id: stri
               <span className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-xs">?</span>
               Eligibility Requirements
             </h2>
-            <p className="text-gray-400 text-base md:text-lg leading-relaxed font-bold italic">
-              "{deal.eligibilityText}"
-            </p>
+            <p className="text-gray-400 text-base md:text-lg leading-relaxed font-bold italic">"{deal.eligibilityText}"</p>
           </section>
-        </div>
+        </motion.div>
 
-        {/* Sidebar */}
-        <div className="lg:col-span-4">
+        <motion.div variants={itemVariants} className="lg:col-span-4">
           <div className="bg-white rounded-[2rem] p-8 md:p-10 border border-gray-100 shadow-2xl shadow-blue-100/30 lg:sticky lg:top-32">
             <div className="mb-10">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-3">Partner Institution</p>
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-gray-50 flex items-center justify-center text-2xl font-black text-blue-600 border border-gray-100">
-                  {deal.partnerName?.[0] || 'V'}
-                </div>
+                <div className="h-12 w-12 rounded-2xl bg-gray-50 flex items-center justify-center text-2xl font-black text-blue-600 border border-gray-100">{deal.partnerName?.[0] || 'V'}</div>
                 <p className="text-xl font-black text-gray-900">{deal.partnerName || 'Visionary Partners'}</p>
               </div>
             </div>
 
             <div className="space-y-6">
               {claimError && (
-                <div className="p-6 bg-red-50 rounded-2xl border border-red-100 animate-in fade-in slide-in-from-top-4">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center text-red-600">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                    </div>
-                    <p className="text-sm font-black text-red-600 uppercase tracking-tight leading-tight">
-                      {claimError}
-                    </p>
-                  </div>
-                  {!user && (
-                    <Link
-                      href="/login"
-                      className="block w-full py-3 bg-red-600 text-white text-center rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-red-100"
-                    >
-                      Login Now
-                    </Link>
-                  )}
-                </div>
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="p-6 bg-red-50 rounded-2xl border border-red-100">
+                  <p className="text-sm font-black text-red-600 uppercase tracking-tight mb-2">{claimError}</p>
+                  {!user && <Link href="/login" className="block w-full py-3 bg-red-600 text-white text-center rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all">Login Now</Link>}
+                </motion.div>
               )}
 
               {claimed ? (
-                <div className="w-full py-5 text-center bg-green-50 text-green-600 font-black rounded-2xl border border-green-100 flex items-center justify-center gap-3 animate-bounce">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
+                <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="w-full py-5 text-center bg-green-50 text-green-600 font-black rounded-2xl border border-green-100 flex items-center justify-center gap-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                   CLAIMED
-                </div>
+                </motion.div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <button
+                  <AnimatedButton
                     onClick={handleAction}
                     disabled={actionLoading}
-                    className={`w-full py-5 rounded-2xl font-black text-lg transition-all shadow-xl ${actionLoading
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : showVerify
-                        ? 'bg-red-600 text-white hover:bg-black active:scale-[0.98] shadow-red-200'
-                        : 'bg-blue-600 text-white hover:bg-black active:scale-[0.98] shadow-blue-200'
-                      }`}
+                    className={`w-full py-5 rounded-2xl font-black text-lg transition-all shadow-xl ${actionLoading ? 'bg-gray-200 text-gray-400' : showVerify ? 'bg-red-600 text-white shadow-red-200' : 'bg-blue-600 text-white shadow-blue-200'}`}
                   >
                     {actionLoading ? 'PROCESSING...' : showVerify ? 'VERIFY NOW' : 'CLAIM BENEFIT'}
-                  </button>
-                  {showVerify && (
-                    <p className="text-[10px] text-center text-red-500 font-black uppercase tracking-widest animate-pulse">
-                      ⚡ For demo purposes only ⚡
-                    </p>
-                  )}
+                  </AnimatedButton>
+                  {showVerify && <p className="text-[10px] text-center text-red-500 font-black uppercase tracking-widest animate-pulse">⚡ For demo purposes only ⚡</p>}
                 </div>
               )}
-              <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100">
-                <p className="text-[10px] text-center text-gray-400 font-bold leading-relaxed uppercase tracking-widest">
-                  Secure deal. verification required by partner. terms apply.
-                </p>
+              <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 text-center">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">Secure deal. terms apply.</p>
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

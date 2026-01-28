@@ -2,27 +2,11 @@
 import Link from 'next/link';
 import { motion, Variants } from 'framer-motion';
 import { Sparkles, ArrowRight, Zap, Target, ShieldCheck, TrendingUp } from 'lucide-react';
+import { AnimatedButton } from '@/components/AnimatedButton';
+
+import { containerVariants, itemVariants } from '@/lib/animations';
 
 export default function Home() {
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-        delayChildren: 0.3,
-      },
-    },
-  };
-
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.8, ease: "easeOut" },
-    },
-  };
 
   return (
     <div className="flex flex-col items-center overflow-x-hidden">
@@ -57,7 +41,7 @@ export default function Home() {
             animate="visible"
             className="flex flex-col items-center space-y-12 text-center"
           >
-            <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-600 text-xs font-black uppercase tracking-widest border border-blue-100 mb-4 cursor-default hover:bg-blue-100 transition-colors">
+            <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-600 text-xs font-black uppercase tracking-widest border border-blue-100 mb-4 cursor-default">
               <Sparkles className="w-3 h-3" />
               Revolutionizing Startup Growth
             </motion.div>
@@ -87,18 +71,16 @@ export default function Home() {
             </div>
 
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto px-4 pt-4">
-              <Link
-                href="/deals"
-                className="group inline-flex h-16 items-center justify-center rounded-2xl bg-blue-600 px-12 text-xl font-black text-white shadow-2xl shadow-blue-200 transition-all hover:bg-blue-700 hover:-translate-y-1 active:scale-95 text-center"
-              >
-                Explore Deals
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <Link href="/deals" className="w-full sm:w-auto">
+                <AnimatedButton className="w-full group inline-flex h-16 items-center justify-center rounded-2xl bg-blue-600 px-12 text-xl font-black text-white shadow-2xl shadow-blue-200 transition-all text-center">
+                  Explore Deals
+                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </AnimatedButton>
               </Link>
-              <Link
-                href="/register"
-                className="inline-flex h-16 items-center justify-center rounded-2xl border-2 border-gray-100 bg-white px-12 text-xl font-black text-gray-900 transition-all hover:bg-gray-50 hover:border-gray-200 active:scale-95 text-center"
-              >
-                Join Now
+              <Link href="/register" className="w-full sm:w-auto">
+                <AnimatedButton className="w-full inline-flex h-16 items-center justify-center rounded-2xl border-2 border-gray-100 bg-white px-12 text-xl font-black text-gray-900 transition-all hover:bg-gray-50 text-center">
+                  Join Now
+                </AnimatedButton>
               </Link>
             </motion.div>
 

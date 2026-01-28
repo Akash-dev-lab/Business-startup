@@ -12,41 +12,46 @@ const Navbar = () => {
     const [userName, setUserName] = useState('');
     const router = useRouter();
 
-    useEffect(() => {
-        const checkLogin = async () => {
-            const token = localStorage.getItem('token');
-            setIsLoggedIn(!!token);
+    const checkLoginStatus = async () => {
+        const token = localStorage.getItem('token');
+        const hasToken = !!token;
+        setIsLoggedIn(hasToken);
 
-            if (token && !userName) {
-                try {
-                    const res = await api.get('/auth/me');
-                    setUserName(res.data.name);
-                } catch (e) {
-                    console.error('Failed to fetch user in navbar', e);
-                }
-            } else if (!token) {
-                setUserName('');
+        if (hasToken && !userName) {
+            try {
+                const res = await api.get('/auth/me');
+                setUserName(res.data.name);
+            } catch (e) {
+                console.error('Failed to fetch user in navbar', e);
             }
-        };
+        } else if (!hasToken) {
+            setUserName('');
+        }
+    };
 
-        checkLogin();
-        const interval = setInterval(checkLogin, 2000);
-        return () => clearInterval(interval);
+    useEffect(() => {
+        checkLoginStatus();
+
+        // Listen for login/logout in other tabs or components
+        window.addEventListener('storage', checkLoginStatus);
+        const interval = setInterval(checkLoginStatus, 5000); // Backoff polling
+
+        return () => {
+            window.removeEventListener('storage', checkLoginStatus);
+            clearInterval(interval);
+        };
     }, [userName]);
 
     const getInitials = (name: string) => {
-        if (!name) return '??';
         return name
-            .split(' ')
-            .map(n => n[0])
-            .join('')
-            .toUpperCase()
-            .substring(0, 2);
+            ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+            : '??';
     };
 
     const handleLogout = () => {
         localStorage.removeItem('token');
         setIsLoggedIn(false);
+        setUserName('');
         router.push('/');
         router.refresh();
     };

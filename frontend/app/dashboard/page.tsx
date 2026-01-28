@@ -3,6 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { Skeleton, DashboardRowSkeleton } from '@/components/Skeleton';
+import { AnimatedButton } from '@/components/AnimatedButton';
 
 interface ClaimedDeal {
     _id: string;
@@ -38,8 +41,20 @@ const DashboardPage = () => {
 
     if (loading) {
         return (
-            <div className="min-h-[60vh] flex items-center justify-center">
-                <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
+                <header className="mb-10">
+                    <Skeleton className="h-10 w-48 mb-2" />
+                    <Skeleton className="h-4 w-64" />
+                </header>
+                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                    <table className="w-full text-left">
+                        <tbody className="divide-y divide-gray-100">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                                <DashboardRowSkeleton key={i} />
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         );
     }
@@ -47,7 +62,11 @@ const DashboardPage = () => {
     if (error) {
         return (
             <div className="max-w-3xl mx-auto px-4 md:px-8 py-24 text-center">
-                <div className="bg-white p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-white p-8 md:p-12 rounded-3xl border border-gray-100 shadow-sm"
+                >
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
                     <p className="text-gray-500 mb-8">{error}</p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -58,7 +77,7 @@ const DashboardPage = () => {
                             Go Home
                         </Link>
                     </div>
-                </div>
+                </motion.div>
             </div>
         );
     }
@@ -67,8 +86,8 @@ const DashboardPage = () => {
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
             <header className="mb-10 flex flex-col md:flex-row md:justify-between md:items-end gap-6">
                 <div>
-                    <h1 className="text-3xl md:text-4xl text-white font-black text-gray-900 mb-2">My Dashboard</h1>
-                    <p className="text-gray-500 font-medium">Tracking your exclusive startup benefits.</p>
+                    <h1 className="text-3xl md:text-5xl font-black text-gray-300 mb-2 tracking-tight">My Dashboard</h1>
+                    <p className="text-gray-400 font-medium">Tracking your exclusive startup benefits.</p>
                 </div>
                 <div className="flex gap-2 p-1 bg-gray-100 rounded-2xl self-start">
                     <button className="px-6 py-2.5 bg-white text-blue-600 font-bold rounded-xl shadow-sm text-sm md:text-base">My Claims</button>
@@ -77,7 +96,11 @@ const DashboardPage = () => {
             </header>
 
             {claims.length === 0 ? (
-                <div className="bg-white rounded-3xl border border-gray-100 p-12 md:p-24 text-center shadow-sm">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-3xl border border-gray-100 p-12 md:p-24 text-center shadow-sm"
+                >
                     <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 text-blue-600 mb-6">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -85,10 +108,12 @@ const DashboardPage = () => {
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">No active claims yet</h2>
                     <p className="text-gray-500 mb-8 max-w-sm mx-auto">Start exploring and claim exclusive deals to see them appear here.</p>
-                    <Link href="/deals" className="inline-flex px-10 py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all active:scale-95">
-                        Browse Deals
+                    <Link href="/deals">
+                        <AnimatedButton className="px-10 py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all">
+                            Browse Deals
+                        </AnimatedButton>
                     </Link>
-                </div>
+                </motion.div>
             ) : (
                 <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
                     {/* Desktop Table View */}
@@ -124,7 +149,11 @@ const DashboardPage = () => {
                                             </span>
                                         </td>
                                         <td className="px-8 py-6 text-right">
-                                            <Link href={`/deals/${claim.dealId?._id}`} className="text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-2 rounded-lg transition-colors">View</Link>
+                                            <Link href={`/deals/${claim.dealId?._id}`}>
+                                                <AnimatedButton className="text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-2 rounded-lg transition-colors">
+                                                    View
+                                                </AnimatedButton>
+                                            </Link>
                                         </td>
                                     </tr>
                                 ))}
@@ -151,8 +180,10 @@ const DashboardPage = () => {
                                     <span className="text-gray-500 font-medium">Partner: <span className="text-gray-900">{claim.dealId?.partnerName || 'Visionary Partners'}</span></span>
                                     <span className="text-gray-400 tabular-nums">{new Date(claim.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
                                 </div>
-                                <Link href={`/deals/${claim.dealId?._id}`} className="block w-full text-center py-3 bg-gray-50 text-blue-600 font-bold rounded-xl text-sm transition-colors active:bg-blue-50">
-                                    View Deal Details
+                                <Link href={`/deals/${claim.dealId?._id}`} className="block w-full">
+                                    <AnimatedButton className="w-full text-center py-3 bg-gray-50 text-blue-600 font-bold rounded-xl text-sm transition-colors active:bg-blue-50">
+                                        View Deal Details
+                                    </AnimatedButton>
                                 </Link>
                             </div>
                         ))}

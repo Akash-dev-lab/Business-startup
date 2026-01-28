@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import DealCard from '@/components/DealCard';
 import { motion, Variants } from 'framer-motion';
+import { Skeleton, DealCardSkeleton } from '@/components/Skeleton';
+import { AnimatedButton } from '@/components/AnimatedButton';
 
 interface Deal {
     _id: string;
@@ -14,32 +16,14 @@ interface Deal {
     partnerName: string;
 }
 
+import { containerVariants, itemVariants } from '@/lib/animations';
+
 const DealsPage = () => {
     const [deals, setDeals] = useState<Deal[]>([]);
     const [isVerified, setIsVerified] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-
-    const containerVariants: Variants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.1,
-            },
-        },
-    };
-
-    const itemVariants: Variants = {
-        hidden: { opacity: 0, scale: 0.95, y: 20 },
-        visible: {
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            transition: { duration: 0.5, ease: "easeOut" },
-        },
-    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -73,10 +57,15 @@ const DealsPage = () => {
 
     if (loading) {
         return (
-            <div className="min-h-[60vh] flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-gray-500 font-medium">Discovering best deals for you...</p>
+            <div className="max-w-7xl mx-auto px-8 py-12 font-jakarta">
+                <header className="mb-12">
+                    <Skeleton className="h-16 w-64 mb-4" />
+                    <Skeleton className="h-6 w-full max-w-2xl" />
+                </header>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <DealCardSkeleton key={i} />
+                    ))}
                 </div>
             </div>
         );
@@ -93,12 +82,12 @@ const DealsPage = () => {
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900">Oops! Failed to load deals</h2>
                     <p className="text-gray-500">{error}</p>
-                    <button
+                    <AnimatedButton
                         onClick={() => window.location.reload()}
-                        className="px-6 py-2 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 transition-colors"
+                        className="px-8 py-3 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-700 shadow-lg shadow-blue-100"
                     >
                         Try Again
-                    </button>
+                    </AnimatedButton>
                 </div>
             </div>
         );
@@ -112,8 +101,10 @@ const DealsPage = () => {
                 transition={{ duration: 0.6 }}
                 className="mb-12"
             >
-                <h1 className="text-4xl md:text-6xl text-white font-black text-gray-900 mb-4 tracking-tight">Exclusive Deals</h1>
-                <p className="text-lg md:text-xl text-gray-500 max-w-2xl font-medium">
+                <h1 className="text-4xl md:text-7xl font-black text-gray-300 mb-6 tracking-tight">
+                    Exclusive <span className="text-blue-600">Deals</span>
+                </h1>
+                <p className="text-lg md:text-xl text-gray-400 max-w-2xl font-medium leading-relaxed">
                     Browse through our curated list of startup deals and benefits.
                     {!isLoggedIn && " Log in to view exclusive locked deals."}
                     {isLoggedIn && !isVerified && " Verify your account to unlock all benefits."}
