@@ -7,19 +7,40 @@ import { useRouter } from 'next/navigation';
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [userName, setUserName] = useState('');
     const router = useRouter();
 
     useEffect(() => {
-        const checkLogin = () => {
+        const checkLogin = async () => {
             const token = localStorage.getItem('token');
             setIsLoggedIn(!!token);
+
+            if (token && !userName) {
+                try {
+                    const res = await import('@/lib/api').then(m => m.default.get('/auth/me'));
+                    setUserName(res.data.name);
+                } catch (e) {
+                    console.error('Failed to fetch user in navbar', e);
+                }
+            } else if (!token) {
+                setUserName('');
+            }
         };
 
         checkLogin();
-        // Use an interval to check for login status change if not using a global state manager
-        const interval = setInterval(checkLogin, 1000);
+        const interval = setInterval(checkLogin, 2000);
         return () => clearInterval(interval);
-    }, []);
+    }, [userName]);
+
+    const getInitials = (name: string) => {
+        if (!name) return '??';
+        return name
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .substring(0, 2);
+    };
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -50,7 +71,7 @@ const Navbar = () => {
                         {isLoggedIn ? (
                             <>
                                 <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-blue-100 border-2 border-white">
-                                    JD
+                                    {getInitials(userName)}
                                 </div>
                                 <button
                                     onClick={handleLogout}
@@ -76,7 +97,7 @@ const Navbar = () => {
                 <div className="md:hidden flex items-center gap-4">
                     {isLoggedIn && (
                         <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-[10px] font-black border border-white">
-                            JD
+                            {getInitials(userName)}
                         </div>
                     )}
                     <button

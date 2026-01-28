@@ -5,11 +5,11 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center">
       {/* Hero Section */}
-      <section className="w-full py-16 md:py-32 lg:py-48 bg-white border-b border-gray-100">
+      <section className="w-full py-5 md:py-5 lg:py-5 bg-white border-b border-gray-100">
         <div className="container px-4 md:px-6 mx-auto">
           <div className="flex flex-col items-center space-y-8 text-center">
             <div className="space-y-4 max-w-4xl">
-              <h1 className="text-4xl font-black tracking-tight sm:text-6xl md:text-7xl lg:text-8xl leading-[1.1]">
+              <h1 className="text-4xl font-black text-gray-400 tracking-tight sm:text-6xl md:text-7xl lg:text-8xl leading-[1.1]">
                 Scale Your Startup with <br className="hidden md:block" /> <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent underline decoration-blue-100 decoration-8 underline-offset-8">Premium Deals</span>
               </h1>
               <p className="mx-auto max-w-[700px] text-gray-500 text-base md:text-xl lg:text-2xl font-medium leading-relaxed px-4">

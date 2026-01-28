@@ -28,22 +28,22 @@ const DealsPage = () => {
                 const allDeals = dealsRes.data;
 
                 // Check login status
-                const token = localStorage.getItem('token');
+                const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
                 setIsLoggedIn(!!token);
+                setDeals(allDeals); // Show all deals to everyone (locked ones will be blurred)
 
                 if (token) {
                     try {
                         const userRes = await api.get('/auth/me');
-                        setIsVerified(userRes.data.isVerified);
-                        setDeals(allDeals); // Logged in: See all (locked will be restricted via isVerified)
+                        // Ensure we strictly check boolean value
+                        setIsVerified(!!userRes.data.isVerified);
+                        console.log('User verification status:', userRes.data.isVerified);
                     } catch (e) {
                         console.error('Failed to fetch user status', e);
                         setIsVerified(false);
-                        setDeals(allDeals);
                     }
                 } else {
-                    // Guest: Sirf Public deals
-                    setDeals(allDeals.filter((d: Deal) => d.accessLevel === 'public'));
+                    setIsVerified(false);
                 }
             } catch (err: any) {
                 setError(err.message || 'Something went wrong while fetching deals.');
