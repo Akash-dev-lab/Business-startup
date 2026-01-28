@@ -28,7 +28,7 @@ const DealsPage = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const dealsRes = await api.get('/listings');
+                const dealsRes = await api.get('/deals');
                 const allDeals = dealsRes.data;
                 const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
                 setIsLoggedIn(!!token);
