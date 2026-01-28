@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import DealCard from '@/components/DealCard';
+import { motion, Variants } from 'framer-motion';
 
 interface Deal {
     _id: string;
@@ -20,24 +21,39 @@ const DealsPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
+    const containerVariants: Variants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1,
+            },
+        },
+    };
+
+    const itemVariants: Variants = {
+        hidden: { opacity: 0, scale: 0.95, y: 20 },
+        visible: {
+            opacity: 1,
+            scale: 1,
+            y: 0,
+            transition: { duration: 0.5, ease: "easeOut" },
+        },
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch deals
                 const dealsRes = await api.get('/deals');
                 const allDeals = dealsRes.data;
-
-                // Check login status
                 const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
                 setIsLoggedIn(!!token);
-                setDeals(allDeals); // Show all deals to everyone (locked ones will be blurred)
+                setDeals(allDeals);
 
                 if (token) {
                     try {
                         const userRes = await api.get('/auth/me');
-                        // Ensure we strictly check boolean value
                         setIsVerified(!!userRes.data.isVerified);
-                        console.log('User verification status:', userRes.data.isVerified);
                     } catch (e) {
                         console.error('Failed to fetch user status', e);
                         setIsVerified(false);
@@ -89,26 +105,38 @@ const DealsPage = () => {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-8 py-12">
-            <header className="mb-12">
-                <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Exclusive Deals</h1>
-                <p className="text-lg text-gray-500 max-w-2xl">
+        <div className="max-w-7xl mx-auto px-8 py-12 font-jakarta">
+            <motion.header
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="mb-12"
+            >
+                <h1 className="text-4xl md:text-6xl text-white font-black text-gray-900 mb-4 tracking-tight">Exclusive Deals</h1>
+                <p className="text-lg md:text-xl text-gray-500 max-w-2xl font-medium">
                     Browse through our curated list of startup deals and benefits.
                     {!isLoggedIn && " Log in to view exclusive locked deals."}
                     {isLoggedIn && !isVerified && " Verify your account to unlock all benefits."}
                 </p>
-            </header>
+            </motion.header>
 
             {deals.length === 0 ? (
                 <div className="bg-white rounded-2xl border-2 border-dashed border-gray-100 p-24 text-center">
                     <p className="text-gray-400 font-medium text-lg">No deals available at the moment. Check back soon!</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <motion.div
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                >
                     {deals.map((deal) => (
-                        <DealCard key={deal._id} deal={deal} isVerified={isVerified} />
+                        <motion.div key={deal._id} variants={itemVariants}>
+                            <DealCard deal={deal} isVerified={isVerified} />
+                        </motion.div>
                     ))}
-                </div>
+                </motion.div>
             )}
         </div>
     );

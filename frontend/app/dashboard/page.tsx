@@ -67,7 +67,7 @@ const DashboardPage = () => {
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
             <header className="mb-10 flex flex-col md:flex-row md:justify-between md:items-end gap-6">
                 <div>
-                    <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-2">My Dashboard</h1>
+                    <h1 className="text-3xl md:text-4xl text-white font-black text-gray-900 mb-2">My Dashboard</h1>
                     <p className="text-gray-500 font-medium">Tracking your exclusive startup benefits.</p>
                 </div>
                 <div className="flex gap-2 p-1 bg-gray-100 rounded-2xl self-start">
