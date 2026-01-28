@@ -1,10 +1,32 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        const checkLogin = () => {
+            const token = localStorage.getItem('token');
+            setIsLoggedIn(!!token);
+        };
+
+        checkLogin();
+        // Use an interval to check for login status change if not using a global state manager
+        const interval = setInterval(checkLogin, 1000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        setIsLoggedIn(false);
+        router.push('/');
+        router.refresh();
+    };
 
     const toggleMenu = () => setIsOpen(!isOpen);
 
@@ -24,18 +46,39 @@ const Navbar = () => {
                     <Link href="/dashboard" className="text-gray-500 hover:text-blue-600 transition-colors">
                         Dashboard
                     </Link>
-                    <div className="flex gap-4">
-                        <Link href="/login" className="px-6 py-2.5 rounded-full text-gray-700 font-bold hover:bg-gray-50 transition-all border border-gray-100">
-                            Login
-                        </Link>
-                        <Link href="/register" className="px-6 py-2.5 rounded-full bg-blue-600 text-white font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-95">
-                            Register
-                        </Link>
+                    <div className="flex gap-4 items-center">
+                        {isLoggedIn ? (
+                            <>
+                                <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-blue-100 border-2 border-white">
+                                    JD
+                                </div>
+                                <button
+                                    onClick={handleLogout}
+                                    className="px-6 py-2.5 rounded-full bg-black text-white font-bold hover:bg-gray-800 transition-all shadow-lg shadow-gray-200 active:scale-95"
+                                >
+                                    Logout
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link href="/login" className="px-6 py-2.5 rounded-full text-gray-700 font-bold hover:bg-gray-50 transition-all border border-gray-100">
+                                    Login
+                                </Link>
+                                <Link href="/register" className="px-6 py-2.5 rounded-full bg-blue-600 text-white font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-95">
+                                    Register
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
 
                 {/* Mobile Menu Button */}
-                <div className="md:hidden">
+                <div className="md:hidden flex items-center gap-4">
+                    {isLoggedIn && (
+                        <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-[10px] font-black border border-white">
+                            JD
+                        </div>
+                    )}
                     <button
                         onClick={toggleMenu}
                         className="p-2 text-gray-600 hover:text-blue-600 transition-colors outline-none"
@@ -75,20 +118,34 @@ const Navbar = () => {
                         Dashboard
                     </Link>
                     <div className="flex flex-col gap-4 pt-2">
-                        <Link
-                            href="/login"
-                            onClick={() => setIsOpen(false)}
-                            className="w-full py-4 text-center rounded-2xl text-gray-700 font-bold bg-gray-50"
-                        >
-                            Login
-                        </Link>
-                        <Link
-                            href="/register"
-                            onClick={() => setIsOpen(false)}
-                            className="w-full py-4 text-center rounded-2xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-100"
-                        >
-                            Register
-                        </Link>
+                        {isLoggedIn ? (
+                            <button
+                                onClick={() => {
+                                    handleLogout();
+                                    setIsOpen(false);
+                                }}
+                                className="w-full py-4 text-center rounded-2xl bg-black text-white font-bold shadow-lg shadow-gray-100 px-6"
+                            >
+                                Logout
+                            </button>
+                        ) : (
+                            <>
+                                <Link
+                                    href="/login"
+                                    onClick={() => setIsOpen(false)}
+                                    className="w-full py-4 text-center rounded-2xl text-gray-700 font-bold bg-gray-50"
+                                >
+                                    Login
+                                </Link>
+                                <Link
+                                    href="/register"
+                                    onClick={() => setIsOpen(false)}
+                                    className="w-full py-4 text-center rounded-2xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-100"
+                                >
+                                    Register
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

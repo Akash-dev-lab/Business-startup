@@ -25,8 +25,15 @@ export const register = asyncHandler(async (req, res) => {
         password: hashedPassword,
     });
 
+    const token = jwt.sign(
+        { userId: newUser._id, email: newUser.email },
+        process.env.JWT_SECRET || "default_secret_key",
+        { expiresIn: process.env.JWT_EXPIRY || "1d" }
+    );
+
     res.status(201).json({
         message: "User registered successfully",
+        token,
         user: newUser,
     });
 });
