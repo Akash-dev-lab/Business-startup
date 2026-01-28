@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 
 interface DealProps {
@@ -12,18 +12,15 @@ interface DealProps {
         accessLevel: string;
         partnerName: string;
     };
+    isVerified?: boolean;
 }
 
-const DealCard: React.FC<DealProps> = ({ deal }) => {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+const DealCard: React.FC<DealProps> = ({ deal, isVerified = false }) => {
     const [showTooltip, setShowTooltip] = useState(false);
 
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        setIsLoggedIn(!!token);
-    }, []);
-
-    const isLocked = deal.accessLevel === 'locked' && !isLoggedIn;
+    // Strict logic: Locked UI remains IF deal is 'locked' AND user is NOT verified
+    // This implements Login ≠ Verified (isVerified is false by default for new users)
+    const isLocked = deal.accessLevel === 'locked' && !isVerified;
 
     const CardContent = (
         <div className={`flex flex-col h-full ${isLocked ? 'relative' : ''}`}>

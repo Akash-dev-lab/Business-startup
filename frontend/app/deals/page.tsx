@@ -15,14 +15,36 @@ interface Deal {
 
 const DealsPage = () => {
     const [deals, setDeals] = useState<Deal[]>([]);
+    const [isVerified, setIsVerified] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
     useEffect(() => {
-        const fetchDeals = async () => {
+        const fetchData = async () => {
             try {
-                const response = await api.get('/deals');
-                setDeals(response.data);
+                // Fetch deals
+                const dealsRes = await api.get('/deals');
+                const allDeals = dealsRes.data;
+
+                // Check login status
+                const token = localStorage.getItem('token');
+                setIsLoggedIn(!!token);
+
+                if (token) {
+                    try {
+                        const userRes = await api.get('/auth/me');
+                        setIsVerified(userRes.data.isVerified);
+                        setDeals(allDeals); // Logged in: See all (locked will be restricted via isVerified)
+                    } catch (e) {
+                        console.error('Failed to fetch user status', e);
+                        setIsVerified(false);
+                        setDeals(allDeals);
+                    }
+                } else {
+                    // Guest: Sirf Public deals
+                    setDeals(allDeals.filter((d: Deal) => d.accessLevel === 'public'));
+                }
             } catch (err: any) {
                 setError(err.message || 'Something went wrong while fetching deals.');
             } finally {
@@ -30,7 +52,7 @@ const DealsPage = () => {
             }
         };
 
-        fetchDeals();
+        fetchData();
     }, []);
 
     if (loading) {
@@ -71,7 +93,9 @@ const DealsPage = () => {
             <header className="mb-12">
                 <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Exclusive Deals</h1>
                 <p className="text-lg text-gray-500 max-w-2xl">
-                    Browse through our curated list of startup deals and benefits. Some deals are locked and require sign-in.
+                    Browse through our curated list of startup deals and benefits.
+                    {!isLoggedIn && " Log in to view exclusive locked deals."}
+                    {isLoggedIn && !isVerified && " Verify your account to unlock all benefits."}
                 </p>
             </header>
 
@@ -82,7 +106,7 @@ const DealsPage = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {deals.map((deal) => (
-                        <DealCard key={deal._id} deal={deal} />
+                        <DealCard key={deal._id} deal={deal} isVerified={isVerified} />
                     ))}
                 </div>
             )}

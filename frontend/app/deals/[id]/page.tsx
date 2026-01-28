@@ -14,21 +14,38 @@ interface Deal {
   partnerName: string;
 }
 
+interface UserProfile {
+  _id: string;
+  isVerified: boolean;
+  name: string;
+}
+
 const DealDetailsPage = ({ params: paramsPromise }: { params: Promise<{ id: string }> }) => {
   const params = use(paramsPromise);
   const { id } = params;
 
   const [deal, setDeal] = useState<Deal | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [claiming, setClaiming] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [claimed, setClaimed] = useState(false);
+  const [claimError, setClaimError] = useState('');
+
+  const isLocked = deal?.accessLevel === 'locked';
+  const showVerify = user && !user.isVerified && isLocked;
 
   useEffect(() => {
-    const fetchDeal = async () => {
+    const fetchData = async () => {
       try {
-        const response = await api.get(`/deals/${id}`);
-        setDeal(response.data);
+        const dealRes = await api.get(`/deals/${id}`);
+        setDeal(dealRes.data);
+
+        const token = localStorage.getItem('token');
+        if (token) {
+          const userRes = await api.get('/auth/me');
+          setUser(userRes.data);
+        }
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to load deal details.');
       } finally {
@@ -36,18 +53,42 @@ const DealDetailsPage = ({ params: paramsPromise }: { params: Promise<{ id: stri
       }
     };
 
-    if (id) fetchDeal();
+    if (id) fetchData();
   }, [id]);
 
-  const handleClaim = async () => {
-    setClaiming(true);
+  const handleAction = async () => {
+    if (showVerify) {
+      // Demo Verification Flow
+      setActionLoading(true);
+      try {
+        await api.post('/auth/verify-me');
+        const userRes = await api.get('/auth/me');
+        setUser(userRes.data);
+      } catch (err: any) {
+        setClaimError(err.response?.data?.message || 'Verification failed. Please try again.');
+      } finally {
+        setActionLoading(false);
+      }
+      return;
+    }
+
+    // Claim Flow
+    setActionLoading(true);
+    setClaimError('');
     try {
       await api.post(`/claims/${id}`);
       setClaimed(true);
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to claim deal. Are you logged in?');
+      const status = err.response?.status;
+      const message = err.response?.data?.message;
+
+      if (status === 401 || status === 403 || message?.toLowerCase().includes('unauthorized') || message?.toLowerCase().includes('verified')) {
+        setClaimError(message || 'You must be verified to claim this deal');
+      } else {
+        setClaimError(message || 'Failed to claim deal. Please try again.');
+      }
     } finally {
-      setClaiming(false);
+      setActionLoading(false);
     }
   };
 
@@ -76,7 +117,8 @@ const DealDetailsPage = ({ params: paramsPromise }: { params: Promise<{ id: stri
     );
   }
 
-  const isLocked = deal.accessLevel === 'locked';
+  // A deal is locked for the UI if it's 'locked' AND user is not verified
+  const isLockedUI = deal.accessLevel === 'locked' && !user?.isVerified;
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-8 py-8 md:py-16">
@@ -90,12 +132,23 @@ const DealDetailsPage = ({ params: paramsPromise }: { params: Promise<{ id: stri
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-16">
         {/* Main Content */}
         <div className="lg:col-span-8 space-y-10">
-          <section className="bg-white rounded-[2rem] p-8 md:p-14 border border-gray-100 shadow-sm">
+          <section className="bg-white rounded-[2rem] p-8 md:p-14 border border-gray-100 shadow-sm relative overflow-hidden">
+            {/* Lock Overlay on Detail Page for unverified users */}
+            {isLockedUI && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/40 backdrop-blur-md">
+                <div className="p-4 bg-white rounded-2xl shadow-2xl border border-gray-100 transform scale-125">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-3 mb-8">
               <span className="px-4 py-1.5 bg-blue-50 text-blue-600 text-[10px] font-black rounded-full uppercase tracking-[0.2em] border border-blue-100">
                 {deal.category}
               </span>
-              {isLocked && (
+              {deal.accessLevel === 'locked' && (
                 <span className="px-4 py-1.5 bg-amber-50 text-amber-600 text-[10px] font-black rounded-full border border-amber-100 uppercase tracking-[0.2em]">
                   Locked Benefit
                 </span>
@@ -107,7 +160,8 @@ const DealDetailsPage = ({ params: paramsPromise }: { params: Promise<{ id: stri
             </p>
           </section>
 
-          <section className="bg-gray-900 rounded-[2rem] p-8 md:p-14 text-white">
+          <section className="bg-gray-900 rounded-[2rem] p-8 md:p-14 text-white relative overflow-hidden">
+            {isLockedUI && <div className="absolute inset-0 z-10 bg-gray-900/40 backdrop-blur-sm" />}
             <h2 className="text-xl md:text-2xl font-black mb-6 flex items-center gap-3">
               <span className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-xs">?</span>
               Eligibility Requirements
@@ -132,6 +186,29 @@ const DealDetailsPage = ({ params: paramsPromise }: { params: Promise<{ id: stri
             </div>
 
             <div className="space-y-6">
+              {claimError && (
+                <div className="p-6 bg-red-50 rounded-2xl border border-red-100 animate-in fade-in slide-in-from-top-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-black text-red-600 uppercase tracking-tight leading-tight">
+                      {claimError}
+                    </p>
+                  </div>
+                  {!user && (
+                    <Link
+                      href="/login"
+                      className="block w-full py-3 bg-red-600 text-white text-center rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-red-100"
+                    >
+                      Login Now
+                    </Link>
+                  )}
+                </div>
+              )}
+
               {claimed ? (
                 <div className="w-full py-5 text-center bg-green-50 text-green-600 font-black rounded-2xl border border-green-100 flex items-center justify-center gap-3 animate-bounce">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
@@ -140,16 +217,25 @@ const DealDetailsPage = ({ params: paramsPromise }: { params: Promise<{ id: stri
                   CLAIMED
                 </div>
               ) : (
-                <button
-                  onClick={handleClaim}
-                  disabled={claiming}
-                  className={`w-full py-5 rounded-2xl font-black text-lg transition-all shadow-xl ${claiming
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={handleAction}
+                    disabled={actionLoading}
+                    className={`w-full py-5 rounded-2xl font-black text-lg transition-all shadow-xl ${actionLoading
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-black active:scale-[0.98] shadow-blue-200'
-                    }`}
-                >
-                  {claiming ? 'PROCESSING...' : 'CLAIM BENEFIT'}
-                </button>
+                      : showVerify
+                        ? 'bg-red-600 text-white hover:bg-black active:scale-[0.98] shadow-red-200'
+                        : 'bg-blue-600 text-white hover:bg-black active:scale-[0.98] shadow-blue-200'
+                      }`}
+                  >
+                    {actionLoading ? 'PROCESSING...' : showVerify ? 'VERIFY NOW' : 'CLAIM BENEFIT'}
+                  </button>
+                  {showVerify && (
+                    <p className="text-[10px] text-center text-red-500 font-black uppercase tracking-widest animate-pulse">
+                      ⚡ For demo purposes only ⚡
+                    </p>
+                  )}
+                </div>
               )}
               <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100">
                 <p className="text-[10px] text-center text-gray-400 font-bold leading-relaxed uppercase tracking-widest">

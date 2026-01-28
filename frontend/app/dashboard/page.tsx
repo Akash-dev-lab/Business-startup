@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 interface ClaimedDeal {
     _id: string;
-    deal: {
+    dealId: {
         _id: string;
         title: string;
         partnerName: string;
@@ -108,23 +108,23 @@ const DashboardPage = () => {
                                     <tr key={claim._id} className="hover:bg-gray-50/50 transition-all group">
                                         <td className="px-8 py-6">
                                             <div className="flex flex-col">
-                                                <span className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">{claim.deal.title}</span>
-                                                <span className="text-[10px] text-gray-400 font-bold uppercase mt-1 px-2 py-0.5 bg-gray-50 rounded-full self-start">{claim.deal.category}</span>
+                                                <span className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">{claim.dealId?.title}</span>
+                                                <span className="text-[10px] text-gray-400 font-bold uppercase mt-1 px-2 py-0.5 bg-gray-50 rounded-full self-start">{claim.dealId?.category}</span>
                                             </div>
                                         </td>
-                                        <td className="px-8 py-6 font-semibold text-gray-600 text-sm">{claim.deal.partnerName || 'Visionary Partners'}</td>
+                                        <td className="px-8 py-6 font-semibold text-gray-600 text-sm">{claim.dealId?.partnerName || 'Visionary Partners'}</td>
                                         <td className="px-8 py-6 text-gray-400 text-sm tabular-nums">
                                             {new Date(claim.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                                         </td>
                                         <td className="px-8 py-6">
                                             <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${claim.status === 'approved' ? 'bg-green-50 text-green-600 border-green-100' :
-                                                    claim.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-gray-50 text-gray-500 border-gray-100'
+                                                claim.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-gray-50 text-gray-500 border-gray-100'
                                                 }`}>
                                                 {claim.status}
                                             </span>
                                         </td>
                                         <td className="px-8 py-6 text-right">
-                                            <Link href={`/deals/${claim.deal._id}`} className="text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-2 rounded-lg transition-colors">View</Link>
+                                            <Link href={`/deals/${claim.dealId?._id}`} className="text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-2 rounded-lg transition-colors">View</Link>
                                         </td>
                                     </tr>
                                 ))}
@@ -138,20 +138,20 @@ const DashboardPage = () => {
                             <div key={claim._id} className="p-6 space-y-4">
                                 <div className="flex justify-between items-start">
                                     <div className="space-y-1">
-                                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{claim.deal.category}</span>
-                                        <h3 className="font-bold text-gray-900 leading-tight">{claim.deal.title}</h3>
+                                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{claim.dealId?.category}</span>
+                                        <h3 className="font-bold text-gray-900 leading-tight">{claim.dealId?.title}</h3>
                                     </div>
                                     <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${claim.status === 'approved' ? 'bg-green-50 text-green-600 border-green-100' :
-                                            claim.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-gray-50 text-gray-500 border-gray-100'
+                                        claim.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-gray-50 text-gray-500 border-gray-100'
                                         }`}>
                                         {claim.status}
                                     </span>
                                 </div>
                                 <div className="flex justify-between items-center text-xs">
-                                    <span className="text-gray-500 font-medium">Partner: <span className="text-gray-900">{claim.deal.partnerName || 'Visionary Partners'}</span></span>
+                                    <span className="text-gray-500 font-medium">Partner: <span className="text-gray-900">{claim.dealId?.partnerName || 'Visionary Partners'}</span></span>
                                     <span className="text-gray-400 tabular-nums">{new Date(claim.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
                                 </div>
-                                <Link href={`/deals/${claim.deal._id}`} className="block w-full text-center py-3 bg-gray-50 text-blue-600 font-bold rounded-xl text-sm transition-colors active:bg-blue-50">
+                                <Link href={`/deals/${claim.dealId?._id}`} className="block w-full text-center py-3 bg-gray-50 text-blue-600 font-bold rounded-xl text-sm transition-colors active:bg-blue-50">
                                     View Deal Details
                                 </Link>
                             </div>
